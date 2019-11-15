@@ -1,26 +1,56 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component, lazy, Suspense } from "react";
+import { PrivateRoute } from "./components/PrivateRoute";
+import { history } from "../src/helpers/history";
+import "./App.css";
+import { Router, Route, Switch } from "react-router-dom";
+import { connect } from "react-redux";
+import Loader from "react-loader-spinner";
+import { alertActions } from "./actions";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+const Home = lazy(() => import("./components/Home"));
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    history.listen((location, action) => {
+      this.props.clearAlerts();
+    });
+  }
+
+  render() {
+    return (
+      <div className="App">
+        <Suspense
+          fallback={
+            <Loader
+              type="MutatingDots"
+              color="#9E9FFF"
+              height={100}
+              width={100}
+              style={{ marginTop: "20%" }}
+            />
+          }
         >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+          <Router history={history}>
+            <Switch>
+              <Route path="/" component={Home} />
+              <PrivateRoute path="/Home" component={Home} />
+            </Switch>
+          </Router>
+        </Suspense>
+      </div>
+    );
+  }
 }
 
-export default App;
+function mapState(state) {
+  const { alert } = state;
+  return { alert };
+}
+
+const actionCreators = {
+  clearAlerts: alertActions.clear
+};
+
+export default connect(mapState, actionCreators)(App);
